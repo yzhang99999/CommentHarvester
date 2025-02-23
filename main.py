@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 import csv
 import os
+import click
 
 def get_comment(video_id: str):
   # Replace with your API key and video ID
@@ -54,18 +55,21 @@ def get_comment(video_id: str):
           break
   return comments
 
+@click.command()
+@click.option('--video-id', '-v', prompt='Enter the YouTube video ID', help='The ID of the YouTube video.')
+@click.option('--output-path', '-o', default='.', help='The directory where the CSV file will be saved.')
+def main(video_id, output_path):
+    csv_file = os.path.join(output_path, f"{video_id}_comments.csv")
+    comments = get_comment(video_id)
+
+    with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
+        fieldnames = ["text", "author", "date", "likes", "type"]
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        for comment in comments:
+            writer.writerow(comment)
+
+    print(f"Total extracted: {len(comments)} comments/replies, saved to {csv_file}")
+
 if __name__ == "__main__":
-  video_id = input("Enter the YouTube video ID: ")
-
-  # Write to CSV
-  csv_file = f"{video_id}_comments.csv"
-  comments = get_comment(video_id)
-
-  with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
-      fieldnames = ["text", "author", "date", "likes", "type"]
-      writer = csv.DictWriter(file, fieldnames=fieldnames)
-      writer.writeheader()
-      for comment in comments:
-          writer.writerow(comment)
-
-  print(f"Total extracted: {len(comments)} comments/replies, saved to {csv_file}")
+    main()
